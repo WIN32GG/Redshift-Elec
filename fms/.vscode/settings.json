@@ -3,6 +3,7 @@
         "fatfs.h": "c",
         "user_diskio.h": "c",
         "ff.h": "c",
-        "integer.h": "c"
+        "integer.h": "c",
+        "main.h": "c"
     }
 }

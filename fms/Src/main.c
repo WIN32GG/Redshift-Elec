@@ -97,7 +97,16 @@ int main(void)
   MX_FATFS_Init();
   MX_CAN_Init();
   /* USER CODE BEGIN 2 */
-
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    //CLEAR_REG(BKP->RTCCR); //Disable Tamper/ Release PC13
+    GPIO_InitTypeDef GPIO_InitStructure;
+ 
+    GPIO_InitStructure.Pin = GPIO_PIN_13;
+    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_MEDIUM;
+    GPIO_InitStructure.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOC,&GPIO_InitStructure);
+    
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -105,7 +114,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+    //HAL_UART_Transmit(&huart1,"yop",3,0);
+    HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+    HAL_Delay(500);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

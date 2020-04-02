@@ -56,3 +56,10 @@ dkms.conf
 
 #Ignore build directory
 build/
+
+#Kicad backup files
+*.bak
+*.bck
+*.kicad_pcb-bak
+*.sch-bak
+_saved_*

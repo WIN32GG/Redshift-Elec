@@ -39,6 +39,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define MPU_6050_ADD 0b1101000 << 1 //Since HAL needs 8-bit address
+#define MPU_6050_ACC_X_H 0x3B
+#define MPU_6050_ACC_X_L 0x3C
+#define MPU_6050_ACC_Z_H 0x3F
+#define MPU_6050_ACC_Z_L 0x40
+#define MPU_6050_ACC_CONF 0x1C
+#define MPU_6050_PWR_MGMT 0x6B
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -107,7 +114,28 @@ int main(void)
     GPIO_InitStructure.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOC,&GPIO_InitStructure);
     //uartString needs to be predefined as array otherwise (i.e. as pointer) chip crashes 
-    uint8_t uartString[17];
+    //uint8_t uartString[17];
+
+    //I2C Stuff
+    uint8_t acc_z[2]={0,0};
+    //MPU6050 Stuff
+    //MPU6050 : Verify if ready
+    uint8_t wakeup[2];
+    wakeup[0]=MPU_6050_PWR_MGMT;
+    wakeup[1]=0x00;
+    if(HAL_I2C_IsDeviceReady(&hi2c1,MPU_6050_ADD,2,HAL_MAX_DELAY) != HAL_OK)
+      HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay Ready",14,HAL_MAX_DELAY);
+    //MPU6050 : Configure POWER_MGMT register to power it up
+    if(HAL_I2C_Master_Transmit(&hi2c1,MPU_6050_ADD,(uint8_t *)wakeup,2,HAL_MAX_DELAY) != HAL_OK)
+      HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay Power",14,HAL_MAX_DELAY);
+    //HAL_Delay(500);
+    //MPU 6050 Acceleromter config (2g precision)
+    uint8_t config[2];
+    config[0]=MPU_6050_ACC_CONF;
+    config[1]=0x00;
+    if(HAL_I2C_Master_Transmit(&hi2c1,MPU_6050_ADD,(uint8_t *)config,2,HAL_MAX_DELAY) != HAL_OK)
+      HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay Conf",14,HAL_MAX_DELAY);
+    //HAL_Delay(500);
     
   /* USER CODE END 2 */
 
@@ -116,13 +144,34 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+    //GPIO stuff
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_RESET);
-    HAL_UART_Transmit(&huart1,(unsigned char*)"Hello World ! Tx\n",17,100);
-    HAL_UART_Receive(&huart1,uartString,17,2000);
-    HAL_UART_Transmit(&huart1,uartString,17,100);    
-    HAL_Delay(500);
+    //UART Stuff
+    //HAL_UART_Transmit(&huart1,(unsigned char*)"Hello World ! Tx\n",17,100);
+    //HAL_UART_Receive(&huart1,uartString,17,2000);
+    //HAL_UART_Transmit(&huart1,uartString,17,100);
+    //I2C stuff
+    //Start with register ACCEL_ZOUT[15:8] (accelerometer on Z axis)
+    //if(HAL_I2C_Master_Transmit(&hi2c1,MPU_6050_ADD,(uint8_t *)MPU_6050_ACC_Z_H,1,HAL_MAX_DELAY) != HAL_OK)
+    //  HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay TX",11,HAL_MAX_DELAY);
+    //else{
+      //HAL_Delay(500);
+      //Sky note: Mem read works but Master Recieve doesn't
+      if(HAL_I2C_Mem_Read(&hi2c1,MPU_6050_ADD,MPU_6050_ACC_Z_H,I2C_MEMADD_SIZE_8BIT,acc_z,2,HAL_MAX_DELAY))
+      //if(HAL_I2C_Master_Receive(&hi2c1,MPU_6050_ADD,(uint8_t *)acc_z,2,HAL_MAX_DELAY) != HAL_OK)
+        HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay RX",11,HAL_MAX_DELAY);
+      else{
+        HAL_UART_Transmit(&huart1,(uint8_t *)"acc_z: ",7,HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart1,(uint8_t *)acc_z,2,HAL_MAX_DELAY);
+      }
+    //}    
+    HAL_UART_Transmit(&huart1,(uint8_t *)"\n",1,HAL_MAX_DELAY);
+
+    //HAL_Delay(500);
+
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_SET);
-    HAL_Delay(500);
+
+    //HAL_Delay(500);
     
     /* USER CODE BEGIN 3 */
   }

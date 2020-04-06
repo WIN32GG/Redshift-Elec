@@ -106,6 +106,8 @@ int main(void)
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStructure.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOC,&GPIO_InitStructure);
+    //uartString needs to be predefined as array otherwise (i.e. as pointer) chip crashes 
+    uint8_t uartString[17];
     
   /* USER CODE END 2 */
 
@@ -114,9 +116,14 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    //HAL_UART_Transmit(&huart1,"yop",3,0);
-    HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_RESET);
+    HAL_UART_Transmit(&huart1,(unsigned char*)"Hello World ! Tx\n",17,100);
+    HAL_UART_Receive(&huart1,uartString,17,2000);
+    HAL_UART_Transmit(&huart1,uartString,17,100);    
     HAL_Delay(500);
+    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_SET);
+    HAL_Delay(500);
+    
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

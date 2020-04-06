@@ -1104,7 +1104,7 @@ HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, u
   *         of u16 available through pData.
   * @param  huart Pointer to a UART_HandleTypeDef structure that contains
   *               the configuration information for the specified UART module.
-  * @param  pData Pointer to data buffer (u8 or u16 data elements).
+  * @param  pData Pointer to data buffer (u8 or u16 data elements). (Sky note: Give array i.e. uint8_t pData[8] as argument)
   * @param  Size  Amount of data elements (u8 or u16) to be received.
   * @param  Timeout Timeout duration
   * @retval HAL status

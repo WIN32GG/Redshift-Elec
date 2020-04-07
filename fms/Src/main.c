@@ -145,6 +145,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
     //GPIO stuff
+    //Turn on PINC13
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_RESET);
     //UART Stuff
     //HAL_UART_Transmit(&huart1,(unsigned char*)"Hello World ! Tx\n",17,100);

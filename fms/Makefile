@@ -118,6 +118,11 @@ C_DEFS =  \
 -DUSE_HAL_DRIVER \
 -DSTM32F103xB
 
+# If it is a debug version, enable SWD pins
+ifeq (${DEBUG}, 1)
+  C_DEFS += -DDEBUG
+endif
+
 
 # AS includes
 AS_INCLUDES = 

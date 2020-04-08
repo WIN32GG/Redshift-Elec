@@ -103,9 +103,12 @@ int main(void)
   MX_SPI1_Init();
   MX_FATFS_Init();
   MX_CAN_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+    // Activate GPIOC, might be better in gpio.c
     __HAL_RCC_GPIOC_CLK_ENABLE();
-    //CLEAR_REG(BKP->RTCCR); //Disable Tamper/ Release PC13
+
+    //Create a gpio struct for pin C13 
     GPIO_InitTypeDef GPIO_InitStructure;
  
     GPIO_InitStructure.Pin = GPIO_PIN_13;
@@ -113,29 +116,39 @@ int main(void)
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStructure.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOC,&GPIO_InitStructure);
+
+    //Array for uart output
     //uartString needs to be predefined as array otherwise (i.e. as pointer) chip crashes 
     //uint8_t uartString[17];
 
     //I2C Stuff
-    uint8_t acc_z[2]={0,0};
+
     //MPU6050 Stuff
-    //MPU6050 : Verify if ready
+    uint8_t acc_z[2]={0,0};    
+    //wakeup[0] Register address for power management of MPU6050
+    //wakeup[1] Register value to apply @address wakeup[0] (Sleep->0)
     uint8_t wakeup[2];
     wakeup[0]=MPU_6050_PWR_MGMT;
     wakeup[1]=0x00;
+    //MPU6050 : Verify if ready
     if(HAL_I2C_IsDeviceReady(&hi2c1,MPU_6050_ADD,2,HAL_MAX_DELAY) != HAL_OK)
+      //If not ready send message through UART
       HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay Ready",14,HAL_MAX_DELAY);
     //MPU6050 : Configure POWER_MGMT register to power it up
     if(HAL_I2C_Master_Transmit(&hi2c1,MPU_6050_ADD,(uint8_t *)wakeup,2,HAL_MAX_DELAY) != HAL_OK)
+      //If not okay send message through UART
       HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay Power",14,HAL_MAX_DELAY);
-    //HAL_Delay(500);
+
     //MPU 6050 Acceleromter config (2g precision)
+    //config[0] Register address for accelerometer precision of MPU6050
+    //config[1] Register value to apply @address config[0] (2g precision)
     uint8_t config[2];
     config[0]=MPU_6050_ACC_CONF;
     config[1]=0x00;
+    //Send config via i2c
     if(HAL_I2C_Master_Transmit(&hi2c1,MPU_6050_ADD,(uint8_t *)config,2,HAL_MAX_DELAY) != HAL_OK)
+      //If config not okay send message through UART
       HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay Conf",14,HAL_MAX_DELAY);
-    //HAL_Delay(500);
     
   /* USER CODE END 2 */
 
@@ -145,34 +158,38 @@ int main(void)
   {
     /* USER CODE END WHILE */
     //GPIO stuff
-    //Turn on PINC13
+    //Turn on PINC13 / Reset = ON because of pullup on board
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_RESET);
     //UART Stuff
     //HAL_UART_Transmit(&huart1,(unsigned char*)"Hello World ! Tx\n",17,100);
     //HAL_UART_Receive(&huart1,uartString,17,2000);
     //HAL_UART_Transmit(&huart1,uartString,17,100);
+
     //I2C stuff
+    /** 
+     * Sky note : Master transmit then master receive doesn't work on mpu6050 because of 
+     * a stop bit at the end of transmit and/or a non existing register pointer on mpu6050 (maybe ?)
+     * Solution : Use HAL_I2C_Mem_Read() to read registers
+     */
     //Start with register ACCEL_ZOUT[15:8] (accelerometer on Z axis)
     //if(HAL_I2C_Master_Transmit(&hi2c1,MPU_6050_ADD,(uint8_t *)MPU_6050_ACC_Z_H,1,HAL_MAX_DELAY) != HAL_OK)
     //  HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay TX",11,HAL_MAX_DELAY);
     //else{
-      //HAL_Delay(500);
-      //Sky note: Mem read works but Master Recieve doesn't
+      //Read Z acceleration (2 bytes) register from MPU6050 and put it in acc_z
       if(HAL_I2C_Mem_Read(&hi2c1,MPU_6050_ADD,MPU_6050_ACC_Z_H,I2C_MEMADD_SIZE_8BIT,acc_z,2,HAL_MAX_DELAY))
       //if(HAL_I2C_Master_Receive(&hi2c1,MPU_6050_ADD,(uint8_t *)acc_z,2,HAL_MAX_DELAY) != HAL_OK)
+        //If read fails, send message through UART
         HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay RX",11,HAL_MAX_DELAY);
       else{
+        //If it works send z acceleration value through UART
         HAL_UART_Transmit(&huart1,(uint8_t *)"acc_z: ",7,HAL_MAX_DELAY);
         HAL_UART_Transmit(&huart1,(uint8_t *)acc_z,2,HAL_MAX_DELAY);
       }
-    //}    
+    //}
+    //Send a CR/LF to end line as a delimiter
     HAL_UART_Transmit(&huart1,(uint8_t *)"\n",1,HAL_MAX_DELAY);
-
-    //HAL_Delay(500);
-
+    //Turn off PINC13 / Set = OFF because of pullup on board
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_SET);
-
-    //HAL_Delay(500);
     
     /* USER CODE BEGIN 3 */
   }

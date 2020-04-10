@@ -17,6 +17,8 @@
   */
 
 #include "fatfs.h"
+#include "spi.h"
+#include "diskio.h"
 
 uint8_t retUSER;    /* Return value for USER */
 char USERPath[4];   /* USER logical drive path */
@@ -33,7 +35,7 @@ void MX_FATFS_Init(void)
   retUSER = FATFS_LinkDriver(&USER_Driver, USERPath);
 
   /* USER CODE BEGIN Init */
-  /* additional user code for init */     
+  /* additional user code for init */
   /* USER CODE END Init */
 }
 

@@ -150,6 +150,32 @@ int main(void)
       //If config not okay send message through UART
       HAL_UART_Transmit(&huart1,(uint8_t *)"Not Okay Conf",14,HAL_MAX_DELAY);
     
+    //FatFs Stuff
+
+    char buffer[128];
+    static FATFS g_sFatFs;
+    FRESULT fresult;
+    FIL file;
+    int len;
+    WORD bytes_written;
+        
+    //mount SD card 
+    fresult = f_mount(&g_sFatFs, "0", 1);       
+    
+    //open file on SD card
+    fresult = f_open(&file, "file.txt", FA_OPEN_ALWAYS | FA_WRITE);
+    
+    //go to the end of the file
+    fresult = f_lseek(&file, file.fsize);   
+    
+    //generate some string
+    len = sprintf( buffer, "Hello World!\r\n");
+    
+    //write data to the file
+    fresult = f_write(&file, "Hello World!\r\n", len, &bytes_written);
+    
+    //close file
+    fresult = f_close (&file);
   /* USER CODE END 2 */
 
   /* Infinite loop */
